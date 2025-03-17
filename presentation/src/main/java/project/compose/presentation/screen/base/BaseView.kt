@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -32,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import project.compose.presentation.R
@@ -48,14 +50,21 @@ fun BaseView() {
     val viewModel: BaseViewModel = viewModel()
     val uiState = viewModel.uiState.collectAsState()
 
-    LaunchedEffect(navController) {
-        navController.addOnDestinationChangedListener { _, destination, _ ->
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             val route = destination.route
             route?.let {
                 viewModel.updateCurrentScreen(navController)
             }
         }
+
+        navController.addOnDestinationChangedListener(listener)
+
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
     }
+
 
     Scaffold(
         bottomBar = {
